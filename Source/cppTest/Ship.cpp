@@ -2,9 +2,16 @@
 #include "Ship.h"
 
 #include "GameFramework/SpringArmComponent.h"
-#include "Components/SphereComponent.h"
+
 #include "ConstructorHelpers.h"
+
+#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+
+#include "Runtime/Engine/Classes/Camera/CameraComponent.h"
+#include "Runtime/Engine/Classes/Components/InputComponent.h"
+
+#include "ShipMovementComponent.h"
 
 // Sets default values
 AShip::AShip()
@@ -16,6 +23,7 @@ AShip::AShip()
 	RootComponent = SphereComponent;
 	SphereComponent->InitSphereRadius(40.0f);
 	SphereComponent->SetCollisionProfileName(TEXT("Pawn"));
+
 	// Create and position a mesh component so we can see where our sphere is
 	UStaticMeshComponent* SphereVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentation"));
 	SphereVisual->SetupAttachment(RootComponent);
@@ -34,6 +42,14 @@ AShip::AShip()
 	SpringArm->TargetArmLength = 400.0f;
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->CameraLagSpeed = 3.0f;
+
+	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+
+	AutoPossessPlayer = EAutoReceiveInput::Player0;
+
+	MovementComponent = CreateDefaultSubobject<UShipMovementComponent>(TEXT("MovementComponent"));
+	MovementComponent->UpdatedComponent = RootComponent;
 }
 
 // Called when the game starts or when spawned
@@ -52,5 +68,29 @@ void AShip::Tick(float DeltaTime)
 void AShip::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis("MoveForward", this, &AShip::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AShip::MoveRight);
+}
+
+UPawnMovementComponent* AShip::GetMovementComponent() const
+{
+	return MovementComponent;
+}
+
+void AShip::MoveForward(float AxisValue)
+{
+	if (MovementComponent && (MovementComponent->UpdatedComponent == RootComponent))
+	{
+		MovementComponent->AddInputVector(GetActorForwardVector() * AxisValue);
+	}
+}
+
+void AShip::MoveRight(float AxisValue)
+{
+	if (MovementComponent && (MovementComponent->UpdatedComponent == RootComponent))
+	{
+		MovementComponent->AddInputVector(GetActorRightVector() * AxisValue);
+	}
 }
 

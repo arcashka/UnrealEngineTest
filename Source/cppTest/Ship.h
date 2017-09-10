@@ -24,4 +24,11 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	virtual UPawnMovementComponent* GetMovementComponent() const override;
+
+	class UPawnMovementComponent* MovementComponent;
+
+	void MoveForward(float AxisValue);
+	void MoveRight(float AxisValue);
 };
